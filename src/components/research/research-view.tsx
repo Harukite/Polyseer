@@ -204,7 +204,7 @@ export function ResearchView({ id }: { id: string }) {
             variant="ghost"
             size="sm"
             onClick={copyLink}
-            className="h-8 gap-1.5 border border-white/20 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            className="h-8 gap-1.5 border border-white/20 bg-black/40 text-white backdrop-blur-md hover:bg-black/60 hover:text-white"
           >
             <Link2 className="size-4" aria-hidden="true" />
             {copied ? "Copied" : "Copy link"}
@@ -215,7 +215,7 @@ export function ResearchView({ id }: { id: string }) {
               size="sm"
               onClick={cancel}
               disabled={cancelling}
-              className="h-8 gap-1.5 border border-white/20 bg-white/10 text-white hover:bg-rose-500/30 hover:text-white"
+              className="h-8 gap-1.5 border border-white/20 bg-black/40 text-white backdrop-blur-md hover:bg-rose-500/40 hover:text-white"
             >
               <Ban className="size-4" aria-hidden="true" />
               {cancelling ? "Cancelling" : "Cancel"}

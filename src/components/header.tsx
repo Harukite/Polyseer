@@ -104,7 +104,7 @@ export default function Header() {
             </motion.div>
 
             {/* Valyu sign-in banner - only for non-authenticated users */}
-            {mounted && !user && (
+            {mounted && !user && !isSelfHosted && (
               <motion.button
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}

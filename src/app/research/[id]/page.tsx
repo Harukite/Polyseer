@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ResearchView } from "@/components/research/research-view";
 
 export const metadata: Metadata = {
-  title: "Forecast | Polyseer",
+  title: "Forecast",
   robots: { index: false, follow: false },
 };
 

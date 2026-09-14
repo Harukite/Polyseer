@@ -252,7 +252,7 @@ export default function HighestROI({ onAnalyze }: HighestROIProps) {
   }
 
   return (
-    <section className="relative flex-1 overflow-hidden py-8">
+    <section className="relative flex-1 min-h-[340px] overflow-hidden py-8">
       <div className="w-full">
         <ThreeDCarousel 
           items={marketCards}

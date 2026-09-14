@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { ResearchHistoryList } from "@/components/research/research-history";
 
 export const metadata: Metadata = {
-  title: "Research history | Polyseer",
+  title: "Research history",
   robots: { index: false, follow: false },
 };
 
