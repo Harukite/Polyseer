@@ -60,10 +60,12 @@ function ValyuOAuthCompleteContent() {
         );
 
         if (!authResult.success) {
-          setStatus('error');
-          setErrorMessage(authResult.error || 'Failed to complete authentication');
-          return;
+          // The Valyu tokens are saved, so research still works without the local session.
+          console.warn('[OAuth Complete] Local session failed, continuing with Valyu tokens:', authResult.error);
         }
+
+        // Seed credit status; the API is the final judge on every call.
+        useAuthStore.getState().refreshApiKeyStatus().catch(() => {});
 
         // Success - redirect to home
         setStatus('success');
