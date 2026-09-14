@@ -147,6 +147,8 @@ VALYU_API_KEY=valyu_your_api_key_here
 
 Valyu mode (OAuth) needs the client id and secret, the Valyu platform URLs, and your own Supabase project. See `.env.example` for the full list.
 
+Completion emails link back to `NEXT_PUBLIC_APP_URL/research/{id}`. That link must be `https`; on plain `http` (for example local development) the email links to the Valyu platform's report page instead.
+
 > **Note:** Valyu OAuth apps will be in general availability soon. Contact contact@valyu.ai if you need access.
 
 ### Run
