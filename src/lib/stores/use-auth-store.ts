@@ -9,8 +9,8 @@ import {
   clearValyuTokens,
   isTokenExpired,
   getValidAccessToken,
+  fetchValyuApiKeyInfo,
   signOutValyu,
-  type ValyuTokens,
 } from '@/lib/valyu-oauth'
 
 interface AuthUser extends User {
@@ -47,6 +47,9 @@ interface AuthActions {
   // Token management
   setValyuTokens: (accessToken: string, refreshToken: string, expiresIn: number) => void
   getValyuAccessToken: () => string | null
+  /** Async: refreshes an expiring token first. Use this before calling the API. */
+  getValidValyuAccessToken: () => Promise<string | null>
+  refreshApiKeyStatus: () => Promise<void>
   setApiKeyStatus: (hasApiKey: boolean, creditsAvailable: boolean) => void
   // Standard methods
   signOut: () => Promise<{ error?: any }>
@@ -55,9 +58,6 @@ interface AuthActions {
 }
 
 type AuthStore = AuthState & AuthActions
-
-// Storage key for Valyu tokens
-const VALYU_TOKEN_KEY = 'valyu_oauth_tokens'
 
 export const useAuthStore = create<AuthStore>()(
   persist(
@@ -110,6 +110,32 @@ export const useAuthStore = create<AuthStore>()(
           return tokens.accessToken
         }
         return null
+      },
+
+      getValidValyuAccessToken: async () => {
+        const token = await getValidAccessToken()
+        const tokens = loadValyuTokens()
+        if (token && tokens) {
+          set({
+            valyuAccessToken: tokens.accessToken,
+            valyuRefreshToken: tokens.refreshToken,
+            valyuTokenExpiresAt: tokens.expiresAt,
+          })
+        } else if (!token) {
+          set({ valyuAccessToken: null, valyuRefreshToken: null, valyuTokenExpiresAt: null })
+        }
+        return token
+      },
+
+      refreshApiKeyStatus: async () => {
+        const token = await getValidAccessToken()
+        if (!token) return
+        try {
+          const info = await fetchValyuApiKeyInfo(token)
+          set({ hasApiKey: info.has_api_key, creditsAvailable: info.credits_available })
+        } catch {
+          // Best effort: the API decides whether credits are sufficient on each call.
+        }
       },
 
       setApiKeyStatus: (hasApiKey: boolean, creditsAvailable: boolean) => {
