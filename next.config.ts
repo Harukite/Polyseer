@@ -1,6 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    // The old in-app analysis page was replaced by /research/[id].
+    return [{ source: '/analysis', destination: '/', permanent: true }];
+  },
   images: {
     remotePatterns: [
       {
