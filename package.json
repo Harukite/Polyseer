@@ -7,11 +7,6 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test:forecast": "tsx scripts/test-forecast.ts",
-    "demo:simple": "tsx scripts/demo-simple.ts",
-    "debug:drivers": "tsx scripts/debug-drivers.ts",
-    "test:valyu": "tsx scripts/test-valyu-search.ts",
-    "test:valyu:simple": "tsx scripts/test-valyu-simple.ts",
     "test:kalshi": "tsx scripts/test-kalshi-integration.ts"
   },
   "dependencies": {
