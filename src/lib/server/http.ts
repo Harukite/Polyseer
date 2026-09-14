@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ValyuError, valyuErrorStatus } from "@/lib/valyu/client";
 
 export class RequestError extends Error {
   constructor(
@@ -57,6 +58,20 @@ export function json(data: unknown, status = 200, headers: Record<string, string
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof RequestError) {
     return json({ error: error.code, message: error.message }, error.status);
+  }
+  if (error instanceof ValyuError) {
+    const status = valyuErrorStatus(error);
+    const code =
+      status === 402
+        ? "INSUFFICIENT_CREDITS"
+        : status === 401
+          ? "AUTH_REQUIRED"
+          : status === 429
+            ? "RATE_LIMITED"
+            : status === 404
+              ? "NOT_FOUND"
+              : "PROVIDER_ERROR";
+    return json({ error: code, message: error.message }, status);
   }
   console.error("[api] unexpected error", error);
   return json(
