@@ -2,7 +2,7 @@
  * Server-side research operations: create, read, list, cancel.
  */
 
-import { valyuCall, type ValyuCallOptions } from "@/lib/valyu/client";
+import { valyuCall, ValyuError, type ValyuCallOptions } from "@/lib/valyu/client";
 import { fetchMarketDataFromUrl } from "@/lib/tools/market-fetcher";
 import { parseMarketUrl } from "@/lib/tools/market-url-parser";
 import { RequestError } from "@/lib/server/http";
@@ -83,7 +83,21 @@ export async function createForecastTask(
     ...(input.notification ? { alert_email: input.notification } : {}),
   };
 
-  const result = await valyuCall<Record<string, unknown>>("/v1/deepresearch/tasks", "POST", body, options);
+  let notified = Boolean(input.notification);
+  let result: Record<string, unknown>;
+  try {
+    result = await valyuCall<Record<string, unknown>>("/v1/deepresearch/tasks", "POST", body, options);
+  } catch (error) {
+    // The alert address must belong to the billed organisation. If it does not,
+    // run the research anyway and skip the email.
+    if (notified && error instanceof ValyuError && error.status === 400 && /email/i.test(error.message)) {
+      delete body.alert_email;
+      notified = false;
+      result = await valyuCall<Record<string, unknown>>("/v1/deepresearch/tasks", "POST", body, options);
+    } else {
+      throw error;
+    }
+  }
   const id = typeof result?.deepresearch_id === "string" ? result.deepresearch_id : undefined;
   if (!id) {
     throw new RequestError(502, "Valyu did not return a research task.", "PROVIDER_ERROR");
@@ -93,7 +107,7 @@ export async function createForecastTask(
     id,
     status: typeof result.status === "string" ? result.status : "queued",
     question: payload.market_facts.question,
-    notified: Boolean(input.notification),
+    notified,
   };
 }
 
