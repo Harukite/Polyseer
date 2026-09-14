@@ -8,6 +8,20 @@
 // OAuth Configuration
 const VALYU_SUPABASE_URL = process.env.NEXT_PUBLIC_VALYU_SUPABASE_URL || '';
 const VALYU_CLIENT_ID = process.env.NEXT_PUBLIC_VALYU_CLIENT_ID || '';
+const VALYU_APP_URL = process.env.NEXT_PUBLIC_VALYU_APP_URL || 'https://platform.valyu.ai';
+
+/**
+ * Two base URLs are involved:
+ * - the Valyu Supabase URL serves the standard OAuth 2.1 endpoints
+ * - the Valyu Platform URL serves userinfo, API key status, and the API proxy
+ */
+export const VALYU_OAUTH_ENDPOINTS = {
+  authorize: `${VALYU_SUPABASE_URL}/auth/v1/oauth/authorize`,
+  token: `${VALYU_SUPABASE_URL}/auth/v1/oauth/token`,
+  userinfo: `${VALYU_APP_URL}/api/oauth/userinfo`,
+  apikey: `${VALYU_APP_URL}/api/oauth/apikey`,
+  proxy: `${VALYU_APP_URL}/api/oauth/proxy`,
+} as const;
 
 // Storage keys for PKCE flow
 const PKCE_STATE_KEY = 'valyu_oauth_state';
@@ -37,6 +51,27 @@ export interface PKCEChallenge {
   state: string;
   codeVerifier: string;
   codeChallenge: string;
+}
+
+export interface ValyuApiKeyInfo {
+  has_api_key: boolean;
+  credits_available: boolean;
+  organisation_id?: string;
+}
+
+/**
+ * Error from the OAuth token endpoint. `code` is the OAuth error code
+ * (for example `invalid_grant`), which callers use to decide whether a
+ * failure is permanent or transient.
+ */
+export class OAuthError extends Error {
+  constructor(
+    public readonly code: string,
+    public readonly description?: string
+  ) {
+    super(description || code);
+    this.name = 'OAuthError';
+  }
 }
 
 // PKCE Utilities
@@ -165,7 +200,7 @@ export async function buildAuthorizationUrl(redirectUri: string): Promise<{
     utm_source: 'polyseer',
   });
 
-  const url = `${VALYU_SUPABASE_URL}/auth/v1/oauth/authorize?${params.toString()}`;
+  const url = `${VALYU_OAUTH_ENDPOINTS.authorize}?${params.toString()}`;
 
   return { url, state, codeVerifier };
 }
@@ -259,49 +294,44 @@ export async function exchangeCodeForTokens(
 }
 
 /**
- * Refresh access token using refresh token
+ * Refresh access token using refresh token.
+ * Throws OAuthError so callers can tell a rejected grant from a network blip.
  */
 export async function refreshAccessToken(refreshToken: string): Promise<{
-  success: boolean;
-  tokens?: {
-    access_token: string;
-    refresh_token: string;
-    expires_in: number;
-  };
-  error?: string;
+  access_token: string;
+  refresh_token?: string;
+  expires_in: number;
+  id_token?: string;
 }> {
-  try {
-    const response = await fetch('/api/auth/valyu/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        grant_type: 'refresh_token',
-        refresh_token: refreshToken,
-      }),
-    });
+  const response = await fetch('/api/auth/valyu/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  });
 
-    const data = await response.json();
-
-    if (!response.ok) {
-      return { success: false, error: data.error || 'Token refresh failed' };
-    }
-
-    return {
-      success: true,
-      tokens: data,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'Token refresh failed',
-    };
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({ error: 'refresh_failed' }));
+    throw new OAuthError(data.error || 'refresh_failed', data.error_description);
   }
+
+  return response.json();
 }
 
+// Concurrent callers (several pollers, several tabs) share one refresh so the
+// rotating refresh token is only spent once.
+let refreshInFlight: Promise<string | null> | null = null;
+
 /**
- * Get valid access token, refreshing if necessary
+ * Get a valid access token, refreshing if it is expired or about to expire.
+ *
+ * Only a definitive `invalid_grant` clears stored credentials. Transient
+ * failures leave the refresh token in place so a later call can retry, which
+ * keeps long-running research polls alive through a network blip.
  */
 export async function getValidAccessToken(): Promise<string | null> {
   const tokens = loadValyuTokens();
@@ -310,28 +340,52 @@ export async function getValidAccessToken(): Promise<string | null> {
     return null;
   }
 
-  // If token is not expired, return it
   if (!isTokenExpired(tokens)) {
     return tokens.accessToken;
   }
 
-  // Try to refresh
-  if (tokens.refreshToken) {
-    const result = await refreshAccessToken(tokens.refreshToken);
-    if (result.success && result.tokens) {
+  if (!tokens.refreshToken) {
+    return Date.now() < tokens.expiresAt ? tokens.accessToken : null;
+  }
+
+  if (refreshInFlight) return refreshInFlight;
+
+  refreshInFlight = (async () => {
+    try {
+      const refreshed = await refreshAccessToken(tokens.refreshToken);
       const newTokens: ValyuTokens = {
-        accessToken: result.tokens.access_token,
-        refreshToken: result.tokens.refresh_token,
-        expiresAt: Date.now() + result.tokens.expires_in * 1000,
+        accessToken: refreshed.access_token,
+        refreshToken: refreshed.refresh_token || tokens.refreshToken,
+        expiresAt: Date.now() + refreshed.expires_in * 1000,
+        idToken: refreshed.id_token,
       };
       saveValyuTokens(newTokens);
       return newTokens.accessToken;
+    } catch (error) {
+      if (error instanceof OAuthError && error.code === 'invalid_grant') {
+        clearValyuTokens();
+        return null;
+      }
+      return Date.now() < tokens.expiresAt ? tokens.accessToken : null;
+    } finally {
+      refreshInFlight = null;
     }
-  }
+  })();
 
-  // Token expired and refresh failed
-  clearValyuTokens();
-  return null;
+  return refreshInFlight;
+}
+
+/**
+ * Fetch API key and credit status for the signed-in user
+ */
+export async function fetchValyuApiKeyInfo(accessToken: string): Promise<ValyuApiKeyInfo> {
+  const response = await fetch(VALYU_OAUTH_ENDPOINTS.apikey, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!response.ok) {
+    throw new OAuthError('apikey_failed', 'Failed to fetch API key info');
+  }
+  return response.json();
 }
 
 /**
@@ -344,10 +398,7 @@ export async function proxyValyuApi(
   body: any,
   accessToken: string
 ): Promise<any> {
-  const VALYU_APP_URL = process.env.NEXT_PUBLIC_VALYU_APP_URL || 'https://platform.valyu.ai';
-  const proxyUrl = `${VALYU_APP_URL}/api/oauth/proxy`;
-
-  const response = await fetch(proxyUrl, {
+  const response = await fetch(VALYU_OAUTH_ENDPOINTS.proxy, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
