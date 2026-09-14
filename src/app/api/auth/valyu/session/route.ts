@@ -98,7 +98,12 @@ export async function POST(request: NextRequest) {
 
     if (createError) {
       // Check if user already exists
-      if (createError.code === 'email_exists') {
+      // Supabase does not always populate `code`; fall back to the message.
+      const isEmailExists =
+        createError.code === 'email_exists' ||
+        createError.message?.includes('already been registered');
+
+      if (isEmailExists) {
         console.log('[Valyu Session] User exists, looking up by email...');
 
         // Find existing user by paginating through all users

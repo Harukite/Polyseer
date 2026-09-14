@@ -52,36 +52,6 @@ function initializeDatabase(sqlite: Database.Database) {
       subscription_status TEXT DEFAULT 'active'
     );
 
-    -- Analysis sessions table
-    CREATE TABLE IF NOT EXISTS analysis_sessions (
-      id TEXT PRIMARY KEY,
-      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      market_url TEXT NOT NULL,
-      platform TEXT DEFAULT 'polymarket',
-      market_identifier TEXT NOT NULL,
-      market_question TEXT,
-      polymarket_slug TEXT,
-      status TEXT DEFAULT 'pending',
-      started_at INTEGER NOT NULL DEFAULT (unixepoch()),
-      current_step TEXT,
-      progress_events TEXT,
-      forecast_result TEXT,
-      forecast_card TEXT,
-      analysis_steps TEXT,
-      full_response TEXT,
-      markdown_report TEXT,
-      p0 REAL,
-      p_neutral REAL,
-      p_aware REAL,
-      drivers TEXT,
-      duration_seconds INTEGER,
-      valyu_cost REAL DEFAULT 0,
-      error_message TEXT,
-      created_at INTEGER NOT NULL DEFAULT (unixepoch()),
-      completed_at INTEGER,
-      updated_at INTEGER NOT NULL DEFAULT (unixepoch())
-    );
-
     -- Featured markets table
     CREATE TABLE IF NOT EXISTS featured_markets (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -103,10 +73,6 @@ function initializeDatabase(sqlite: Database.Database) {
     -- Create indexes for performance
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_users_valyu_sub ON users(valyu_sub);
-    CREATE INDEX IF NOT EXISTS idx_analysis_sessions_user_id ON analysis_sessions(user_id);
-    CREATE INDEX IF NOT EXISTS idx_analysis_sessions_platform ON analysis_sessions(platform);
-    CREATE INDEX IF NOT EXISTS idx_analysis_sessions_user_completed ON analysis_sessions(user_id, completed_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_analysis_sessions_created_at ON analysis_sessions(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_featured_markets_is_active ON featured_markets(is_active);
     CREATE INDEX IF NOT EXISTS idx_featured_markets_sort_order ON featured_markets(sort_order);
     CREATE INDEX IF NOT EXISTS idx_featured_markets_platform ON featured_markets(platform);

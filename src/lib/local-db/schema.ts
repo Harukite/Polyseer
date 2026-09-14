@@ -28,58 +28,6 @@ export const users = sqliteTable("users", {
 });
 
 // ============================================
-// Analysis Sessions Table
-// ============================================
-export const analysisSessions = sqliteTable("analysis_sessions", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-
-  // Market identification
-  marketUrl: text("market_url").notNull(),
-  platform: text("platform").default("polymarket"),
-  marketIdentifier: text("market_identifier").notNull(),
-  marketQuestion: text("market_question"),
-
-  // Legacy column
-  polymarketSlug: text("polymarket_slug"),
-
-  // Status tracking
-  status: text("status").default("pending"),
-  startedAt: integer("started_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-  currentStep: text("current_step"),
-  progressEvents: text("progress_events"), // JSON string
-
-  // Analysis results
-  forecastResult: text("forecast_result"), // JSON string
-  forecastCard: text("forecast_card"), // JSON string
-  analysisSteps: text("analysis_steps"), // JSON string
-  fullResponse: text("full_response"),
-  markdownReport: text("markdown_report"),
-
-  // Metadata
-  p0: real("p0"),
-  pNeutral: real("p_neutral"),
-  pAware: real("p_aware"),
-  drivers: text("drivers"), // JSON string
-  durationSeconds: integer("duration_seconds"),
-  valyuCost: real("valyu_cost").default(0),
-  errorMessage: text("error_message"),
-
-  // Timestamps
-  createdAt: integer("created_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-  completedAt: integer("completed_at", { mode: "timestamp" }),
-  updatedAt: integer("updated_at", { mode: "timestamp" })
-    .notNull()
-    .default(sql`(unixepoch())`),
-});
-
-// ============================================
 // Featured Markets Table
 // ============================================
 export const featuredMarkets = sqliteTable("featured_markets", {
@@ -118,7 +66,5 @@ export const featuredMarkets = sqliteTable("featured_markets", {
 // ============================================
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-export type AnalysisSession = typeof analysisSessions.$inferSelect;
-export type InsertAnalysisSession = typeof analysisSessions.$inferInsert;
 export type FeaturedMarket = typeof featuredMarkets.$inferSelect;
 export type InsertFeaturedMarket = typeof featuredMarkets.$inferInsert;

@@ -148,3 +148,9 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Indeterminate progress bar sweep */
+@keyframes progress-sweep {
+  0% { transform: translateX(-110%); }
+  100% { transform: translateX(340%); }
+}
