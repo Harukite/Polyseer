@@ -4,7 +4,6 @@ import { useState } from "react";
 import { Download, FileSpreadsheet, FileText, LoaderCircle } from "lucide-react";
 import { downloadDeliverable } from "@/lib/research/client";
 import type { ResearchDeliverable } from "@/lib/research/task";
-import { cn } from "@/lib/utils";
 
 const META: Record<string, { label: string; icon: typeof FileText; blurb: string }> = {
   pdf: { label: "Full report (PDF)", icon: FileText, blurb: "Evidence, base rates, catalysts, and cited sources." },
@@ -61,9 +60,7 @@ export function ResearchDeliverables({
               type="button"
               onClick={() => download(deliverable)}
               disabled={loading}
-              className={cn(
-                "flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 p-3 text-left transition-colors hover:bg-white/15 disabled:opacity-60"
-              )}
+              className="flex items-center gap-3 rounded-xl border border-white/15 bg-white/5 p-3 text-left transition-colors hover:bg-white/15 disabled:opacity-60"
             >
               <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white/10" aria-hidden="true">
                 {loading ? <LoaderCircle className="size-5 animate-spin" /> : <Icon className="size-5" />}

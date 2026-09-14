@@ -37,23 +37,19 @@ export function ResearchProgress({
   const effort = effortDetails(task.effort);
   const percent = task.progress?.percent;
 
-  const title = reconnecting
-    ? "Reconnecting"
+  const { title, description, Icon } = reconnecting
+    ? { title: "Reconnecting", description: "Updates are interrupted. Reconnecting automatically.", Icon: WifiOff }
     : paused
-      ? "Research paused"
+      ? { title: "Research paused", description: "Open this task on the Valyu platform to continue.", Icon: Pause }
       : queued
-        ? "Waiting to start"
-        : "Researching this market";
-  const description = reconnecting
-    ? "Updates are interrupted. Reconnecting automatically."
-    : paused
-      ? "Open this task on the Valyu platform to continue."
-      : queued
-        ? "Your research is in the queue and will begin shortly."
-        : effort
-          ? `${effort.label} effort usually takes ${effort.estimate.toLowerCase()}. Steps stream in below.`
-          : "Searching sources and weighing the evidence.";
-  const Icon = reconnecting ? WifiOff : paused ? Pause : queued ? Clock3 : Search;
+        ? { title: "Waiting to start", description: "Your research is in the queue and will begin shortly.", Icon: Clock3 }
+        : {
+            title: "Researching this market",
+            description: effort
+              ? `${effort.label} effort usually takes ${effort.estimate.toLowerCase()}. Steps stream in below.`
+              : "Searching sources and weighing the evidence.",
+            Icon: Search,
+          };
 
   return (
     <section

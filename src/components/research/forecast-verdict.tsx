@@ -47,7 +47,7 @@ function ProbabilityBar({ label, value, tone }: { label: string; value: number; 
     <div>
       <div className="flex items-baseline justify-between text-xs text-white/60">
         <span>{label}</span>
-        <span className={cn("text-base font-semibold tabular-nums text-white")}>{pct(value)}</span>
+        <span className="text-base font-semibold tabular-nums text-white">{pct(value)}</span>
       </div>
       <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-white/10">
         <motion.span
@@ -87,12 +87,7 @@ export function ForecastVerdict({ forecast, marketUrl, platform }: ForecastVerdi
         <h1 className="mt-1 text-xl font-semibold leading-snug sm:text-2xl">{forecast.question}</h1>
 
         <div className="mt-6 grid gap-6 sm:grid-cols-[auto_1fr] sm:items-center">
-          <div
-            className={cn(
-              "flex items-center gap-3 self-start rounded-2xl border px-5 py-4",
-              side.ring
-            )}
-          >
+          <div className={cn("flex items-center gap-3 self-start rounded-2xl border px-5 py-4", side.ring)}>
             <SideIcon className="size-7" aria-hidden="true" />
             <div>
               <div className="text-lg font-semibold leading-none">{side.label}</div>

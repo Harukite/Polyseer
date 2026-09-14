@@ -38,7 +38,7 @@ function formatDate(value?: string): string {
   });
 }
 
-export function PlatformMark({ platform, className }: { platform?: "polymarket" | "kalshi"; className?: string }) {
+function PlatformMark({ platform }: { platform?: "polymarket" | "kalshi" }) {
   const src =
     platform === "kalshi"
       ? "https://kalshi.com/logo192.png"
@@ -46,7 +46,7 @@ export function PlatformMark({ platform, className }: { platform?: "polymarket" 
         ? "https://www.google.com/s2/favicons?domain=polymarket.com&sz=32"
         : null;
   return (
-    <span className={cn("flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10", className)}>
+    <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={platform ? getPlatformName(platform) : ""} className="size-4 rounded-sm" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Check, ChevronRight, RotateCcw, Zap } from "lucide-react";
 import { DEFAULT_EFFORT, researchEfforts, type ResearchEffort } from "@/lib/research/effort";
@@ -16,7 +16,6 @@ interface EffortSelectorProps {
 const STOPS = researchEfforts.length - 1;
 
 export function EffortSelector({ value, onChange, disabled = false, className }: EffortSelectorProps) {
-  const id = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const level = Math.max(0, researchEfforts.findIndex((effort) => effort.value === value));
@@ -108,7 +107,6 @@ export function EffortSelector({ value, onChange, disabled = false, className }:
           ))}
         </div>
         <input
-          id={id}
           type="range"
           min={0}
           max={STOPS}

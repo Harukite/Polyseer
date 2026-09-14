@@ -64,6 +64,7 @@ export function ResearchView({ id }: { id: string }) {
   const initialized = useAuthStore((state) => state.initialized);
   const pollsRef = useRef(0);
   const failuresRef = useRef(0);
+  const hasTaskRef = useRef(false);
 
   const active = task ? ACTIVE_STATUSES.has(task.status) : true;
   const needsSignIn = !isSelfHostedApp && initialized && !user && error instanceof ResearchApiError && error.isAuth;
@@ -85,6 +86,7 @@ export function ResearchView({ id }: { id: string }) {
         if (cancelled) return;
         pollsRef.current += 1;
         failuresRef.current = 0;
+        hasTaskRef.current = true;
         setTask(next);
         setError(null);
         setConnection("live");
@@ -100,7 +102,7 @@ export function ResearchView({ id }: { id: string }) {
         }
         failuresRef.current += 1;
         setConnection("reconnecting");
-        if (!task && failuresRef.current >= 3) {
+        if (!hasTaskRef.current && failuresRef.current >= 3) {
           setError(err instanceof Error ? err : new Error("Could not load this research."));
         }
         schedule(Math.min(30_000, 6_000 * failuresRef.current));

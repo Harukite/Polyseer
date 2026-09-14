@@ -171,7 +171,7 @@ export function ForecastDetails({ forecast }: { forecast: ForecastOutput }) {
         <div className="prose prose-sm prose-invert max-w-none prose-headings:font-semibold prose-p:leading-relaxed prose-a:text-sky-300 prose-a:no-underline hover:prose-a:underline prose-li:marker:text-white/40">
           <ReactMarkdown
             components={{
-              a: ({ ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+              a: (props) => <a {...props} target="_blank" rel="noopener noreferrer" />,
             }}
           >
             {forecast.rationale}

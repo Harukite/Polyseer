@@ -63,7 +63,7 @@ function Step({ step, live }: { step: ActivityStep; live: boolean }) {
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className={cn("relative flex gap-3 pb-5", "before:absolute before:bottom-1 before:left-[15px] before:top-8 before:w-px before:bg-white/15 last:before:hidden")}
+      className="relative flex gap-3 pb-5 before:absolute before:bottom-1 before:left-[15px] before:top-8 before:w-px before:bg-white/15 last:before:hidden"
     >
       <span
         className={cn(
