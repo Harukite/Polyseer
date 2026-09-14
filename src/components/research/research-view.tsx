@@ -122,7 +122,7 @@ export function ResearchView({ id }: { id: string }) {
     document.addEventListener("visibilitychange", resume);
     return () => {
       cancelled = true;
-      controller.abort();
+      controller.abort(new DOMException("Research view closed", "AbortError"));
       window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", resume);
     };
