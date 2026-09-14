@@ -41,14 +41,14 @@ Drop in any **Polymarket or Kalshi** URL. Polyseer reads the live market (questi
 - **A full PDF report** and **a CSV of every factor** affecting the market
 - **An email** when the research finishes, so you can close the tab
 
-**Research effort** is a slider with four levels. Each level maps to a DeepResearch mode:
+**Research effort** has four levels, chosen from the settings pill under the search box. Fast is the default. Each level maps to a DeepResearch mode:
 
-| Effort | DeepResearch mode | Typical time | Cost per run |
-|--------|-------------------|--------------|--------------|
-| Low    | `fast`            | About 5 min  | $0.10        |
-| Medium | `standard`        | 10 to 20 min | $0.50        |
-| High   | `heavy`           | 30 to 60 min | $2.50        |
-| XHigh  | `max`             | Up to 2 hours| $15.00       |
+| Effort   | DeepResearch mode | Typical time | Cost per run |
+|----------|-------------------|--------------|--------------|
+| Fast     | `fast`            | About 5 min  | $0.10        |
+| Standard | `standard`        | 10 to 20 min | $0.50        |
+| Deep     | `heavy`           | 30 to 60 min | $2.50        |
+| Max      | `max`             | Up to 2 hours| $15.00       |
 
 The second deliverable file adds $0.10 per run. Deeper effort means more sources, more cross-checking, and a longer report.
 

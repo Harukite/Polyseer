@@ -265,27 +265,12 @@ export default function HeroSection({ onShowHowItWorks, marketUrl, setMarketUrl,
               </AnimatePresence>
             </div>
 
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
-              className="relative z-20 pt-4"
-            >
-              <EffortSelector value={effort} onChange={changeEffort} disabled={submitting} />
-              {emailNote && (
-                <p className="mt-2 flex items-center justify-center gap-1.5 text-xs text-white/70 drop-shadow-md">
-                  <Mail className="size-3.5" aria-hidden="true" />
-                  We&apos;ll email {emailNote} when the research is ready.
-                </p>
-              )}
-            </motion.div>
-
             {/* Powered by Valyu pill - below input */}
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.3, ease: "easeOut" }}
-              className="flex justify-center gap-2 mt-4"
+              className="relative z-20 flex flex-wrap justify-center gap-2 mt-4"
             >
               <div className="relative flex items-center gap-2 bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/30">
                 <span className="text-sm text-white/80 font-medium">Powered by</span>
@@ -304,6 +289,19 @@ export default function HeroSection({ onShowHowItWorks, marketUrl, setMarketUrl,
                   />
                 </a>
               </div>
+              <EffortSelector
+                value={effort}
+                onChange={changeEffort}
+                disabled={submitting}
+                note={
+                  emailNote ? (
+                    <span className="flex items-center gap-1.5">
+                      <Mail className="size-3" aria-hidden="true" />
+                      We&apos;ll email {emailNote} when the research is ready.
+                    </span>
+                  ) : undefined
+                }
+              />
               <button
                 type="button"
                 onClick={onShowHowItWorks}

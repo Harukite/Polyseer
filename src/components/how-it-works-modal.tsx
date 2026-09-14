@@ -26,7 +26,7 @@ export default function HowItWorksModal({ open, onOpenChange }: HowItWorksModalP
                 <h3 className="font-semibold mb-1">1. Paste a market, pick a depth</h3>
                 <p className="text-sm text-neutral-600 dark:text-neutral-400">
                   Polyseer reads the live market: question, prices, close date, and resolution rules.
-                  The effort slider sets how long the research runs, from about five minutes to two hours.
+                  The effort setting controls how long the research runs, from about five minutes to two hours. Fast is the default.
                 </p>
               </div>
             </div>
