@@ -5,7 +5,7 @@
 import { activityFromMessages, activitySources, type ActivityStep, type ActivitySource } from "./activity";
 import { effortDetails, type ResearchEffort } from "./effort";
 import { isForecastQuery, parseForecastQuery } from "./prompt";
-import { isForecastOutput, type ForecastOutput } from "./schema";
+import { parseForecastOutput, type ForecastOutput } from "./schema";
 import type { MarketPlatform } from "@/lib/tools/market-url-parser";
 
 export type ResearchStatus =
@@ -109,7 +109,7 @@ function parseOutput(value: unknown): ForecastOutput | undefined {
       return undefined;
     }
   }
-  return isForecastOutput(candidate) ? candidate : undefined;
+  return parseForecastOutput(candidate);
 }
 
 function parseDeliverables(value: unknown): ResearchDeliverable[] {
