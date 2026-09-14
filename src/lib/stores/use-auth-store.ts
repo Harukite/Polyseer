@@ -9,7 +9,6 @@ import {
   clearValyuTokens,
   isTokenExpired,
   getValidAccessToken,
-  fetchValyuApiKeyInfo,
   signOutValyu,
 } from '@/lib/valyu-oauth'
 
@@ -49,7 +48,6 @@ interface AuthActions {
   getValyuAccessToken: () => string | null
   /** Async: refreshes an expiring token first. Use this before calling the API. */
   getValidValyuAccessToken: () => Promise<string | null>
-  refreshApiKeyStatus: () => Promise<void>
   setApiKeyStatus: (hasApiKey: boolean, creditsAvailable: boolean) => void
   // Standard methods
   signOut: () => Promise<{ error?: any }>
@@ -125,17 +123,6 @@ export const useAuthStore = create<AuthStore>()(
           set({ valyuAccessToken: null, valyuRefreshToken: null, valyuTokenExpiresAt: null })
         }
         return token
-      },
-
-      refreshApiKeyStatus: async () => {
-        const token = await getValidAccessToken()
-        if (!token) return
-        try {
-          const info = await fetchValyuApiKeyInfo(token)
-          set({ hasApiKey: info.has_api_key, creditsAvailable: info.credits_available })
-        } catch {
-          // Best effort: the API decides whether credits are sufficient on each call.
-        }
       },
 
       setApiKeyStatus: (hasApiKey: boolean, creditsAvailable: boolean) => {

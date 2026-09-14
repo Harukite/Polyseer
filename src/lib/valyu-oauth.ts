@@ -53,12 +53,6 @@ export interface PKCEChallenge {
   codeChallenge: string;
 }
 
-export interface ValyuApiKeyInfo {
-  has_api_key: boolean;
-  credits_available: boolean;
-  organisation_id?: string;
-}
-
 /**
  * Error from the OAuth token endpoint. `code` is the OAuth error code
  * (for example `invalid_grant`), which callers use to decide whether a
@@ -373,19 +367,6 @@ export async function getValidAccessToken(): Promise<string | null> {
   })();
 
   return refreshInFlight;
-}
-
-/**
- * Fetch API key and credit status for the signed-in user
- */
-export async function fetchValyuApiKeyInfo(accessToken: string): Promise<ValyuApiKeyInfo> {
-  const response = await fetch(VALYU_OAUTH_ENDPOINTS.apikey, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) {
-    throw new OAuthError('apikey_failed', 'Failed to fetch API key info');
-  }
-  return response.json();
 }
 
 /**

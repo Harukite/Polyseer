@@ -64,9 +64,6 @@ function ValyuOAuthCompleteContent() {
           console.warn('[OAuth Complete] Local session failed, continuing with Valyu tokens:', authResult.error);
         }
 
-        // Seed credit status; the API is the final judge on every call.
-        useAuthStore.getState().refreshApiKeyStatus().catch(() => {});
-
         // Success - redirect to home
         setStatus('success');
 
