@@ -13,6 +13,7 @@ import { getPlatformName } from "@/lib/tools/market-url-parser";
 import { ForecastDetails } from "./forecast-details";
 import { ForecastVerdict } from "./forecast-verdict";
 import { ResearchActivity } from "./research-activity";
+import { ResearchBackdrop } from "./research-backdrop";
 import { ResearchDeliverables } from "./research-deliverables";
 import { ResearchProgress, type ResearchConnection } from "./research-progress";
 import { ResearchSources } from "./research-sources";
@@ -24,7 +25,8 @@ const HIDDEN_DELAY = 30_000;
 function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative min-h-screen px-4 pb-24 pt-24 sm:px-6 md:pt-28">
-      <div className="mx-auto w-full max-w-4xl">{children}</div>
+      <ResearchBackdrop />
+      <div className="relative z-10 mx-auto w-full max-w-4xl">{children}</div>
     </div>
   );
 }

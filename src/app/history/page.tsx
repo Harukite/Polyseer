@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { ResearchBackdrop } from "@/components/research/research-backdrop";
 import { ResearchHistoryList } from "@/components/research/research-history";
 
 export const metadata: Metadata = {
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
 export default function HistoryPage() {
   return (
     <div className="relative min-h-screen px-4 pb-24 pt-24 sm:px-6 md:pt-28">
-      <div className="mx-auto w-full max-w-3xl">
+      <ResearchBackdrop />
+      <div className="relative z-10 mx-auto w-full max-w-3xl">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3 text-white">
           <div>
             <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white">
