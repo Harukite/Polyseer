@@ -204,8 +204,8 @@ export default function Header() {
                         View all
                       </Link>
                     </DropdownMenuLabel>
-                    <div className="max-h-[280px] overflow-y-auto p-2 [&_a]:border-gray-200 [&_a]:bg-gray-50 [&_a]:text-gray-900 [&_a]:shadow-none [&_a]:backdrop-blur-none hover:[&_a]:bg-gray-100 dark:[&_a]:border-gray-800 dark:[&_a]:bg-gray-900 dark:[&_a]:text-gray-100 dark:hover:[&_a]:bg-gray-800 [&_a_span]:text-inherit">
-                      <ResearchHistoryList limit={6} compact />
+                    <div className="max-h-[280px] overflow-y-auto p-2">
+                      <ResearchHistoryList limit={6} compact appearance="plain" />
                     </div>
                   </div>
 

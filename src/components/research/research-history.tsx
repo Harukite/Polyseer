@@ -13,15 +13,47 @@ import { cn } from "@/lib/utils";
 
 const REFRESH_MS = 15_000;
 
-const STATUS: Record<ResearchStatus, { label: string; icon: typeof Clock; tone: string; spin?: boolean }> = {
-  queued: { label: "Queued", icon: Clock, tone: "text-white/60 bg-white/10" },
-  running: { label: "Researching", icon: LoaderCircle, tone: "text-sky-200 bg-sky-500/20", spin: true },
-  awaiting_input: { label: "Needs input", icon: Clock, tone: "text-amber-200 bg-amber-500/20" },
-  paused: { label: "Paused", icon: Clock, tone: "text-amber-200 bg-amber-500/20" },
-  completed: { label: "Complete", icon: CheckCircle2, tone: "text-emerald-200 bg-emerald-500/20" },
-  failed: { label: "Failed", icon: AlertCircle, tone: "text-rose-200 bg-rose-500/20" },
-  cancelled: { label: "Cancelled", icon: XCircle, tone: "text-white/60 bg-white/10" },
-  unknown: { label: "Unknown", icon: Clock, tone: "text-white/60 bg-white/10" },
+/** "glass" sits on the dark video backdrop; "plain" follows the app theme (menus, dropdowns). */
+type Appearance = "glass" | "plain";
+
+const STATUS: Record<
+  ResearchStatus,
+  { label: string; icon: typeof Clock; glass: string; plain: string; spin?: boolean }
+> = {
+  queued: { label: "Queued", icon: Clock, glass: "text-white/60 bg-white/10", plain: "text-muted-foreground bg-muted" },
+  running: {
+    label: "Researching",
+    icon: LoaderCircle,
+    glass: "text-sky-200 bg-sky-500/20",
+    plain: "text-sky-700 bg-sky-100 dark:text-sky-300 dark:bg-sky-900/40",
+    spin: true,
+  },
+  awaiting_input: {
+    label: "Needs input",
+    icon: Clock,
+    glass: "text-amber-200 bg-amber-500/20",
+    plain: "text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40",
+  },
+  paused: {
+    label: "Paused",
+    icon: Clock,
+    glass: "text-amber-200 bg-amber-500/20",
+    plain: "text-amber-700 bg-amber-100 dark:text-amber-300 dark:bg-amber-900/40",
+  },
+  completed: {
+    label: "Complete",
+    icon: CheckCircle2,
+    glass: "text-emerald-200 bg-emerald-500/20",
+    plain: "text-emerald-700 bg-emerald-100 dark:text-emerald-300 dark:bg-emerald-900/40",
+  },
+  failed: {
+    label: "Failed",
+    icon: AlertCircle,
+    glass: "text-rose-200 bg-rose-500/20",
+    plain: "text-rose-700 bg-rose-100 dark:text-rose-300 dark:bg-rose-900/40",
+  },
+  cancelled: { label: "Cancelled", icon: XCircle, glass: "text-white/60 bg-white/10", plain: "text-muted-foreground bg-muted" },
+  unknown: { label: "Unknown", icon: Clock, glass: "text-white/60 bg-white/10", plain: "text-muted-foreground bg-muted" },
 };
 
 function formatDate(value?: string): string {
@@ -38,7 +70,7 @@ function formatDate(value?: string): string {
   });
 }
 
-function PlatformMark({ platform }: { platform?: "polymarket" | "kalshi" }) {
+function PlatformMark({ platform, appearance }: { platform?: "polymarket" | "kalshi"; appearance: Appearance }) {
   const src =
     platform === "kalshi"
       ? "https://kalshi.com/logo192.png"
@@ -46,18 +78,31 @@ function PlatformMark({ platform }: { platform?: "polymarket" | "kalshi" }) {
         ? "https://www.google.com/s2/favicons?domain=polymarket.com&sz=32"
         : null;
   return (
-    <span className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
+    <span
+      className={cn(
+        "flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full",
+        appearance === "glass" ? "bg-white/10" : "bg-muted"
+      )}
+    >
       {src ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={platform ? getPlatformName(platform) : ""} className="size-4 rounded-sm" />
       ) : (
-        <span className="size-2 rounded-full bg-white/40" aria-hidden="true" />
+        <span className="size-2 rounded-full bg-current opacity-40" aria-hidden="true" />
       )}
     </span>
   );
 }
 
-export function ResearchHistoryList({ limit, compact = false }: { limit?: number; compact?: boolean }) {
+export function ResearchHistoryList({
+  limit,
+  compact = false,
+  appearance = "glass",
+}: {
+  limit?: number;
+  compact?: boolean;
+  appearance?: Appearance;
+}) {
   const [tasks, setTasks] = useState<ResearchSummary[] | null>(null);
   const [error, setError] = useState<ResearchApiError | Error | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -65,6 +110,11 @@ export function ResearchHistoryList({ limit, compact = false }: { limit?: number
   const user = useAuthStore((state) => state.user);
   const initialized = useAuthStore((state) => state.initialized);
   const signedOut = !isSelfHostedApp && initialized && !user;
+  const glass = appearance === "glass";
+  const muted = glass ? "text-white/55" : "text-muted-foreground";
+  const panel = glass
+    ? "rounded-2xl border border-white/20 bg-black/45 text-white shadow-xl backdrop-blur-md"
+    : "rounded-xl border border-border bg-muted/40 text-foreground";
 
   useEffect(() => {
     if (signedOut) {
@@ -99,8 +149,8 @@ export function ResearchHistoryList({ limit, compact = false }: { limit?: number
 
   if (signedOut) {
     return (
-      <div className="rounded-2xl border border-white/20 bg-black/45 p-6 text-center text-white shadow-xl backdrop-blur-md">
-        <p className="text-sm text-white/70">Sign in with Valyu to see your forecasts.</p>
+      <div className={cn(panel, "p-6 text-center")}>
+        <p className={cn("text-sm", muted)}>Sign in with Valyu to see your forecasts.</p>
         <Button onClick={() => setAuthOpen(true)} className="mt-4 bg-white text-black hover:bg-white/90">
           Sign in with Valyu
         </Button>
@@ -113,7 +163,7 @@ export function ResearchHistoryList({ limit, compact = false }: { limit?: number
     return (
       <div className="grid gap-2" aria-busy="true">
         {Array.from({ length: compact ? 3 : 5 }, (_, i) => (
-          <div key={i} className="h-16 animate-pulse rounded-xl bg-white/10" />
+          <div key={i} className={cn("animate-pulse rounded-xl", compact ? "h-12" : "h-16", glass ? "bg-white/10" : "bg-muted")} />
         ))}
       </div>
     );
@@ -124,17 +174,17 @@ export function ResearchHistoryList({ limit, compact = false }: { limit?: number
   return (
     <div>
       {error && (
-        <p className="mb-3 flex items-center gap-2 text-sm text-rose-200">
+        <p className={cn("mb-3 flex items-center gap-2 text-sm", glass ? "text-rose-200" : "text-rose-600 dark:text-rose-300")}>
           <AlertCircle className="size-4" aria-hidden="true" />
           {error.message}
         </p>
       )}
       {visible.length === 0 ? (
-        <div className="rounded-2xl border border-white/20 bg-black/45 p-6 text-center text-sm text-white/65 shadow-xl backdrop-blur-md">
+        <div className={cn(panel, "p-6 text-center text-sm", muted)}>
           No forecasts yet. Paste a Polymarket or Kalshi URL to start one.
         </div>
       ) : (
-        <ul className="grid gap-2">
+        <ul className={cn("grid", compact ? "gap-1.5" : "gap-2")}>
           {visible.map((task) => {
             const status = STATUS[task.status] || STATUS.unknown;
             const Icon = status.icon;
@@ -143,21 +193,29 @@ export function ResearchHistoryList({ limit, compact = false }: { limit?: number
                 <Link
                   href={`/research/${task.id}`}
                   className={cn(
-                    "flex items-center gap-3 rounded-xl border border-white/15 bg-black/45 text-white shadow-lg backdrop-blur-md transition-colors hover:bg-white/10",
+                    "flex items-center gap-3 transition-colors",
+                    glass
+                      ? "rounded-xl border border-white/15 bg-black/45 text-white shadow-lg backdrop-blur-md hover:bg-white/10"
+                      : "rounded-lg text-foreground hover:bg-accent",
                     compact ? "p-2.5" : "p-3.5"
                   )}
                 >
-                  <PlatformMark platform={task.market.platform} />
+                  <PlatformMark platform={task.market.platform} appearance={appearance} />
                   <span className="min-w-0 flex-1">
                     <span className={cn("block font-medium leading-snug", compact ? "line-clamp-1 text-sm" : "line-clamp-2 text-[15px]")}>
                       {task.title}
                     </span>
-                    <span className="mt-0.5 block text-xs text-white/50">
+                    <span className={cn("mt-0.5 block text-xs", muted)}>
                       {formatDate(task.createdAt)}
                       {task.market.platform ? ` · ${getPlatformName(task.market.platform)}` : ""}
                     </span>
                   </span>
-                  <span className={cn("flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium", status.tone)}>
+                  <span
+                    className={cn(
+                      "flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-medium",
+                      glass ? status.glass : status.plain
+                    )}
+                  >
                     <Icon className={cn("size-3", status.spin && "animate-spin")} aria-hidden="true" />
                     {status.label}
                   </span>
@@ -172,7 +230,7 @@ export function ResearchHistoryList({ limit, compact = false }: { limit?: number
           type="button"
           onClick={() => setRefreshing(true)}
           disabled={refreshing}
-          className="mt-4 flex items-center gap-1.5 text-xs text-white/55 hover:text-white disabled:opacity-50"
+          className={cn("mt-4 flex items-center gap-1.5 text-xs disabled:opacity-50", muted, glass ? "hover:text-white" : "hover:text-foreground")}
         >
           <RefreshCw className={cn("size-3.5", refreshing && "animate-spin")} aria-hidden="true" />
           Refresh
