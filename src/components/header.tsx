@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import TelegramBotModal from '@/components/telegram-bot-modal';
-import { ConnectPolymarket } from '@/components/connect-polymarket';
 import { useAuthStore } from '@/lib/stores/use-auth-store';
 import { AuthModal } from '@/components/auth-modal';
 import { ThemeSwitcher } from '@/components/ui/theme-switcher';
@@ -212,7 +211,6 @@ export default function Header() {
             transition={{ duration: 0.8, delay: 0.4, ease: 'easeOut' }}
             className='flex items-center gap-0.5 md:gap-1'
           >
-            {/* <ConnectPolymarket /> */}
 
             {mounted && user ? (
               <DropdownMenu onOpenChange={(open) => open && fetchAnalysisHistory()}>
