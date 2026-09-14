@@ -7,9 +7,8 @@ import {
   assertSameOrigin,
   errorResponse,
   json,
-  readJson,
+  readResearchRequest,
   RequestError,
-  requireValyuToken,
 } from "@/lib/server/http";
 import { fetchValyuUserEmail } from "@/lib/valyu/client";
 
@@ -19,7 +18,7 @@ export const maxDuration = 60;
 /** GET /api/research - the caller's forecast history. */
 export async function GET(request: Request) {
   try {
-    const accessToken = requireValyuToken(request, "Sign in with Valyu to see your research.");
+    const { accessToken } = await readResearchRequest(request, "Sign in with Valyu to see your research.");
     const tasks = await listResearchTasks({ accessToken });
     return json({ tasks });
   } catch (error) {
@@ -31,9 +30,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     assertSameOrigin(request);
-    const accessToken = requireValyuToken(request, "Sign in with Valyu to run research.");
-
-    const body = (await readJson(request)) as Record<string, unknown>;
+    const { body, accessToken } = await readResearchRequest(request, "Sign in with Valyu to run research.");
     const marketUrl = typeof body?.marketUrl === "string" ? body.marketUrl.trim() : "";
     const effort = parseResearchEffort(body?.effort);
     if (!marketUrl || marketUrl.length > 2048) {

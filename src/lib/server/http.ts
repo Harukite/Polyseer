@@ -44,16 +44,27 @@ export async function readJson(request: Request, maxBytes = 16_000): Promise<unk
 }
 
 /**
- * The signed-in user's Valyu access token, sent by the client on every research
- * call. Required in valyu mode so the right organisation is billed; self-hosted
- * mode uses the host's API key instead and needs no token.
+ * Read a research request: its JSON body (for POST) and the signed-in user's
+ * Valyu access token. The token travels in the body as `valyuAccessToken`
+ * (a header would push requests past the header size limit once session
+ * cookies are present); an `x-valyu-token` header is accepted for API use.
+ * The token is required in valyu mode so the right organisation is billed;
+ * self-hosted mode uses the host's API key and needs none.
  */
-export function requireValyuToken(request: Request, message: string): string | undefined {
-  const accessToken = request.headers.get("x-valyu-token")?.trim() || undefined;
+export async function readResearchRequest(
+  request: Request,
+  message: string
+): Promise<{ body: Record<string, unknown>; accessToken?: string }> {
+  const body =
+    request.method === "POST"
+      ? ((await readJson(request).catch(() => ({}))) as Record<string, unknown>)
+      : {};
+  const fromBody = typeof body.valyuAccessToken === "string" ? body.valyuAccessToken.trim() : "";
+  const accessToken = fromBody || request.headers.get("x-valyu-token")?.trim() || undefined;
   if (!isSelfHostedMode() && !accessToken) {
     throw new RequestError(401, message, "AUTH_REQUIRED");
   }
-  return accessToken;
+  return { body, accessToken };
 }
 
 export function json(data: unknown, status = 200, headers: Record<string, string> = {}): NextResponse {

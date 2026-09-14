@@ -33,10 +33,17 @@ const STATUS_MESSAGES: Record<number, string> = {
   429: "Too many requests. Wait a moment and try again.",
 };
 
-async function authHeaders(): Promise<Record<string, string>> {
-  if (isSelfHostedApp) return {};
-  const token = await getValidAccessToken();
-  return token ? { "x-valyu-token": token } : {};
+/**
+ * The token rides in the JSON body rather than a header: with session cookies
+ * present, a header pushes requests past the server's header size limit.
+ */
+async function withToken(fields: Record<string, unknown> = {}): Promise<RequestInit> {
+  const token = isSelfHostedApp ? null : await getValidAccessToken();
+  return {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(token ? { ...fields, valyuAccessToken: token } : fields),
+  };
 }
 
 async function readError(response: Response, fallback: string): Promise<ResearchApiError> {
@@ -53,11 +60,7 @@ export interface StartedResearch {
 }
 
 export async function startResearch(marketUrl: string, effort: ResearchEffort): Promise<StartedResearch> {
-  const response = await fetch("/api/research", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-    body: JSON.stringify({ marketUrl, effort }),
-  });
+  const response = await fetch("/api/research", await withToken({ marketUrl, effort }));
   if (!response.ok) throw await readError(response, "The research could not start. Please try again.");
   const data = (await response.json()) as { research: StartedResearch };
   return data.research;
@@ -65,7 +68,7 @@ export async function startResearch(marketUrl: string, effort: ResearchEffort): 
 
 export async function fetchResearch(id: string, signal?: AbortSignal): Promise<ResearchTask> {
   const response = await fetch(`/api/research/${encodeURIComponent(id)}`, {
-    headers: await authHeaders(),
+    ...(await withToken()),
     cache: "no-store",
     signal,
   });
@@ -75,17 +78,14 @@ export async function fetchResearch(id: string, signal?: AbortSignal): Promise<R
 }
 
 export async function fetchResearchHistory(): Promise<ResearchSummary[]> {
-  const response = await fetch("/api/research", { headers: await authHeaders(), cache: "no-store" });
+  const response = await fetch("/api/research/list", { ...(await withToken()), cache: "no-store" });
   if (!response.ok) throw await readError(response, "Could not load your research history.");
   const data = (await response.json()) as { tasks: ResearchSummary[] };
   return data.tasks;
 }
 
 export async function cancelResearch(id: string): Promise<ResearchTask> {
-  const response = await fetch(`/api/research/${encodeURIComponent(id)}/cancel`, {
-    method: "POST",
-    headers: await authHeaders(),
-  });
+  const response = await fetch(`/api/research/${encodeURIComponent(id)}/cancel`, await withToken());
   if (!response.ok) throw await readError(response, "Could not cancel this research.");
   const data = (await response.json()) as { task: ResearchTask };
   return data.task;
@@ -95,7 +95,7 @@ export async function cancelResearch(id: string): Promise<ResearchTask> {
 export async function downloadDeliverable(id: string, fileId: string, filename: string): Promise<void> {
   const response = await fetch(
     `/api/research/${encodeURIComponent(id)}/files/${encodeURIComponent(fileId)}`,
-    { headers: await authHeaders() }
+    await withToken()
   );
   if (!response.ok) throw await readError(response, "Could not download this file.");
   const blob = await response.blob();

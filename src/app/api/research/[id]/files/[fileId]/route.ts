@@ -1,5 +1,5 @@
 import { getDeliverable } from "@/lib/research/service";
-import { errorResponse, RequestError, requireValyuToken } from "@/lib/server/http";
+import { errorResponse, readResearchRequest, RequestError } from "@/lib/server/http";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -45,8 +45,11 @@ async function fetchAllowed(url: string): Promise<Response> {
   throw new RequestError(502, "The file download redirected too many times.", "PROVIDER_ERROR");
 }
 
-/** GET /api/research/[id]/files/[fileId] - stream a deliverable to the browser. */
-export async function GET(
+/**
+ * GET or POST /api/research/[id]/files/[fileId] - stream a deliverable to the
+ * browser. POST carries the Valyu token in the body.
+ */
+async function handle(
   request: Request,
   context: { params: Promise<{ id: string; fileId: string }> }
 ) {
@@ -55,7 +58,7 @@ export async function GET(
     if (!FILE_ID_PATTERN.test(fileId)) {
       throw new RequestError(400, "This file ID is invalid.", "INVALID_INPUT");
     }
-    const accessToken = requireValyuToken(request, "Sign in with Valyu to download this file.");
+    const { accessToken } = await readResearchRequest(request, "Sign in with Valyu to download this file.");
 
     const deliverable = await getDeliverable(id, fileId, { accessToken });
     if (!deliverable) throw new RequestError(404, "This file is not available.", "NOT_FOUND");
@@ -83,3 +86,6 @@ export async function GET(
     return errorResponse(error);
   }
 }
+
+export const GET = handle;
+export const POST = handle;
