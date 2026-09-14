@@ -1,6 +1,5 @@
-import { isSelfHostedMode } from "@/lib/local-db/local-auth";
-import { getDeliverableUrl } from "@/lib/research/service";
-import { errorResponse, json, RequestError, valyuTokenFromRequest } from "@/lib/server/http";
+import { getDeliverable } from "@/lib/research/service";
+import { errorResponse, RequestError, requireValyuToken } from "@/lib/server/http";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -56,22 +55,20 @@ export async function GET(
     if (!FILE_ID_PATTERN.test(fileId)) {
       throw new RequestError(400, "This file ID is invalid.", "INVALID_INPUT");
     }
-    const accessToken = valyuTokenFromRequest(request);
-    if (!isSelfHostedMode() && !accessToken) {
-      return json({ error: "AUTH_REQUIRED", message: "Sign in with Valyu to download this file." }, 401);
-    }
+    const accessToken = requireValyuToken(request, "Sign in with Valyu to download this file.");
 
-    const url = await getDeliverableUrl(id, fileId, { accessToken });
-    if (!url) throw new RequestError(404, "This file is not available.", "NOT_FOUND");
+    const deliverable = await getDeliverable(id, fileId, { accessToken });
+    if (!deliverable) throw new RequestError(404, "This file is not available.", "NOT_FOUND");
+    const { url, type } = deliverable;
 
     const upstream = await fetchAllowed(url);
     if (!upstream.ok || !upstream.body) {
       throw new RequestError(502, "Could not download this file.", "PROVIDER_ERROR");
     }
 
-    const extension = (new URL(url).pathname.split(".").pop() || "").toLowerCase();
+    const extension = CONTENT_TYPES[type] ? type : "";
     const contentType =
-      CONTENT_TYPES[extension] || upstream.headers.get("content-type") || "application/octet-stream";
+      CONTENT_TYPES[type] || upstream.headers.get("content-type") || "application/octet-stream";
     const filename = `polyseer-${id.slice(0, 8)}-${fileId.slice(0, 12)}${extension ? `.${extension}` : ""}`;
 
     return new Response(upstream.body, {

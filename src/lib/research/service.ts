@@ -11,7 +11,7 @@ import type { ResearchNotification } from "./notification";
 import { buildForecastRequest } from "./prompt";
 import { forecastOutputSchema } from "./schema";
 import {
-  deliverableUrlFromStatus,
+  deliverableFromStatus,
   summaryFromListItem,
   taskFromStatus,
   type ResearchSummary,
@@ -119,11 +119,8 @@ export async function getResearchTask(id: string, options: ValyuCallOptions): Pr
 
 export async function listResearchTasks(options: ValyuCallOptions): Promise<ResearchSummary[]> {
   const raw = await valyuCall<unknown>(`/v1/deepresearch/list?limit=${LIST_LIMIT}`, "GET", undefined, options);
-  const rows = Array.isArray(raw)
-    ? raw
-    : Array.isArray((raw as Record<string, unknown>)?.data)
-      ? ((raw as Record<string, unknown>).data as unknown[])
-      : [];
+  const data = (raw as { data?: unknown })?.data;
+  const rows = Array.isArray(raw) ? raw : Array.isArray(data) ? data : [];
   const summaries = rows
     .map(summaryFromListItem)
     .filter((item): item is ResearchSummary => Boolean(item));
@@ -137,12 +134,12 @@ export async function cancelResearchTask(id: string, options: ValyuCallOptions):
   await valyuCall(`/v1/deepresearch/tasks/${id}/cancel`, "POST", {}, options);
 }
 
-export async function getDeliverableUrl(
+export async function getDeliverable(
   id: string,
   deliverableId: string,
   options: ValyuCallOptions
-): Promise<string | undefined> {
+): Promise<{ url: string; type: string } | undefined> {
   assertTaskId(id);
   const raw = await valyuCall(`/v1/deepresearch/tasks/${id}/status`, "GET", undefined, options);
-  return deliverableUrlFromStatus(raw, deliverableId);
+  return deliverableFromStatus(raw, deliverableId);
 }

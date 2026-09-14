@@ -200,9 +200,13 @@ export function summaryFromListItem(raw: unknown): ResearchSummary | undefined {
 }
 
 /** Deliverable download URLs are token-signed; keep them server-side. */
-export function deliverableUrlFromStatus(raw: unknown, deliverableId: string): string | undefined {
+export function deliverableFromStatus(
+  raw: unknown,
+  deliverableId: string
+): { url: string; type: string } | undefined {
   const task = record(raw);
   if (!Array.isArray(task.deliverables)) return undefined;
   const match = task.deliverables.map((d) => record(d)).find((d) => d.id === deliverableId);
-  return text(match?.url);
+  const url = text(match?.url);
+  return url ? { url, type: String(match?.type || "").toLowerCase() } : undefined;
 }
