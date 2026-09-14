@@ -70,8 +70,8 @@ export function ForecastDetails({ forecast }: { forecast: ForecastOutput }) {
   const forNo = evidence.filter((item) => item.direction !== "for");
 
   return (
-    <div className="grid gap-4">
-      <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         <Panel title="Evidence for YES" icon={<ArrowUp className="size-4 text-emerald-300" aria-hidden="true" />}>
           {forYes.length ? (
             <ul className="grid gap-2">{forYes.map((item, i) => <EvidenceItem key={i} item={item} />)}</ul>
@@ -111,7 +111,7 @@ export function ForecastDetails({ forecast }: { forecast: ForecastOutput }) {
         </Panel>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         {forecast.base_rate && (
           <Panel title="Base rate">
             <p className="text-2xl font-semibold tabular-nums">{pct(forecast.base_rate.value)}</p>
@@ -140,7 +140,7 @@ export function ForecastDetails({ forecast }: { forecast: ForecastOutput }) {
         </Panel>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         {forecast.what_would_change_mind && forecast.what_would_change_mind.length > 0 && (
           <Panel title="What would change this forecast" icon={<HelpCircle className="size-4" aria-hidden="true" />}>
             <ul className="grid gap-1.5 text-sm text-white/80">

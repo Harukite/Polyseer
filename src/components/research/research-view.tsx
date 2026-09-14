@@ -233,7 +233,7 @@ export function ResearchView({ id }: { id: string }) {
         </div>
       )}
 
-      <div className="grid gap-4">
+      <div className="grid grid-cols-1 gap-4 [&>*]:min-w-0">
         <AnimatePresence mode="popLayout">
           {active && (
             <motion.div key="progress" layout exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.25 }}>

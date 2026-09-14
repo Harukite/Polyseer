@@ -60,7 +60,6 @@ function Step({ step, live }: { step: ActivityStep; live: boolean }) {
 
   return (
     <motion.li
-      layout="position"
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
