@@ -60,6 +60,14 @@ export interface ValyuCallOptions {
   accessToken?: string;
 }
 
+/** Upstream statuses we explain in our own words rather than passing through. */
+const STATUS_MESSAGES: Record<number, string> = {
+  401: "Your Valyu session expired. Please sign in again.",
+  402: "Your Valyu account needs credits. Add credits at platform.valyu.ai, then try again.",
+  403: "This Valyu feature is not available for your account.",
+  429: "Valyu is handling too many requests. Wait a moment and try again.",
+};
+
 /**
  * Low-level call. Returns parsed JSON, throws ValyuError on failure.
  */
@@ -69,35 +77,37 @@ export async function valyuCall<T = unknown>(
   body: unknown,
   { accessToken }: ValyuCallOptions = {}
 ): Promise<T> {
-  let response: Response;
+  let url: string;
+  let init: RequestInit;
 
   if (isSelfHostedMode()) {
     const apiKey = process.env.VALYU_API_KEY;
     if (!apiKey) {
       throw new ValyuError("Set VALYU_API_KEY to run research in self-hosted mode.", 503);
     }
-    response = await fetch(`${VALYU_API_BASE}${path}`, {
+    url = `${VALYU_API_BASE}${path}`;
+    init = {
       method,
       headers: { "x-api-key": apiKey, "Content-Type": "application/json" },
       body: body !== undefined ? JSON.stringify(body) : undefined,
-      cache: "no-store",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
+    };
   } else {
     if (!accessToken) {
       throw new ValyuError("Sign in with Valyu to continue.", 401);
     }
-    response = await fetch(VALYU_OAUTH_PROXY_URL, {
+    url = VALYU_OAUTH_PROXY_URL;
+    init = {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({ path, method, ...(body !== undefined ? { body } : {}) }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-    });
+    };
   }
+
+  const response = await fetch(url, {
+    ...init,
+    cache: "no-store",
+    signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+  });
 
   const text = await response.text();
   let json: any = null;
@@ -108,28 +118,8 @@ export async function valyuCall<T = unknown>(
   }
 
   if (!response.ok) {
-    if (response.status === 402) {
-      throw new ValyuError(
-        "Your Valyu account needs credits. Add credits at platform.valyu.ai, then try again.",
-        402,
-        text
-      );
-    }
-    if (response.status === 401) {
-      throw new ValyuError("Your Valyu session expired. Please sign in again.", 401, text);
-    }
-    if (response.status === 403) {
-      throw new ValyuError("This Valyu feature is not available for your account.", 403, text);
-    }
-    if (response.status === 429) {
-      throw new ValyuError(
-        "Valyu is handling too many requests. Wait a moment and try again.",
-        429,
-        text
-      );
-    }
     const message =
-      json?.error?.message || json?.message || json?.error || `Valyu request failed (${response.status})`;
+      STATUS_MESSAGES[response.status] || json?.error?.message || json?.message || json?.error;
     throw new ValyuError(
       typeof message === "string" ? message : `Valyu request failed (${response.status})`,
       response.status,

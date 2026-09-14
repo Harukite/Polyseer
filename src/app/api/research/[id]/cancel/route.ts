@@ -1,6 +1,5 @@
-import { isSelfHostedMode } from "@/lib/local-db/local-auth";
 import { cancelResearchTask, getResearchTask } from "@/lib/research/service";
-import { assertSameOrigin, errorResponse, json, valyuTokenFromRequest } from "@/lib/server/http";
+import { assertSameOrigin, errorResponse, json, requireValyuToken } from "@/lib/server/http";
 import { ValyuError } from "@/lib/valyu/client";
 
 export const runtime = "nodejs";
@@ -11,10 +10,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   try {
     assertSameOrigin(request);
     const { id } = await context.params;
-    const accessToken = valyuTokenFromRequest(request);
-    if (!isSelfHostedMode() && !accessToken) {
-      return json({ error: "AUTH_REQUIRED", message: "Sign in with Valyu to cancel research." }, 401);
-    }
+    const accessToken = requireValyuToken(request, "Sign in with Valyu to cancel research.");
     try {
       await cancelResearchTask(id, { accessToken });
     } catch (error) {

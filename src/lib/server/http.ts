@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isSelfHostedMode } from "@/lib/local-db/local-auth";
 import { ValyuError, valyuErrorStatus } from "@/lib/valyu/client";
 
 export class RequestError extends Error {
@@ -42,10 +43,17 @@ export async function readJson(request: Request, maxBytes = 16_000): Promise<unk
   }
 }
 
-/** The signed-in user's Valyu access token, sent by the client on every research call. */
-export function valyuTokenFromRequest(request: Request): string | undefined {
-  const header = request.headers.get("x-valyu-token")?.trim();
-  return header || undefined;
+/**
+ * The signed-in user's Valyu access token, sent by the client on every research
+ * call. Required in valyu mode so the right organisation is billed; self-hosted
+ * mode uses the host's API key instead and needs no token.
+ */
+export function requireValyuToken(request: Request, message: string): string | undefined {
+  const accessToken = request.headers.get("x-valyu-token")?.trim() || undefined;
+  if (!isSelfHostedMode() && !accessToken) {
+    throw new RequestError(401, message, "AUTH_REQUIRED");
+  }
+  return accessToken;
 }
 
 export function json(data: unknown, status = 200, headers: Record<string, string> = {}): NextResponse {
@@ -55,23 +63,20 @@ export function json(data: unknown, status = 200, headers: Record<string, string
   });
 }
 
+const VALYU_ERROR_CODES: Record<number, string> = {
+  401: "AUTH_REQUIRED",
+  402: "INSUFFICIENT_CREDITS",
+  404: "NOT_FOUND",
+  429: "RATE_LIMITED",
+};
+
 export function errorResponse(error: unknown): NextResponse {
   if (error instanceof RequestError) {
     return json({ error: error.code, message: error.message }, error.status);
   }
   if (error instanceof ValyuError) {
     const status = valyuErrorStatus(error);
-    const code =
-      status === 402
-        ? "INSUFFICIENT_CREDITS"
-        : status === 401
-          ? "AUTH_REQUIRED"
-          : status === 429
-            ? "RATE_LIMITED"
-            : status === 404
-              ? "NOT_FOUND"
-              : "PROVIDER_ERROR";
-    return json({ error: code, message: error.message }, status);
+    return json({ error: VALYU_ERROR_CODES[status] || "PROVIDER_ERROR", message: error.message }, status);
   }
   console.error("[api] unexpected error", error);
   return json(

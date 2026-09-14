@@ -24,15 +24,14 @@ export class ResearchApiError extends Error {
   get isAuth() {
     return this.status === 401;
   }
-
-  get isCredits() {
-    return this.status === 402;
-  }
-
-  get isTransient() {
-    return this.status === 503 || this.status === 429 || this.status >= 500;
-  }
 }
+
+/** Shown when the server sends no message of its own. */
+const STATUS_MESSAGES: Record<number, string> = {
+  401: "Sign in with Valyu to continue.",
+  402: "Your Valyu account needs credits. Add credits at platform.valyu.ai.",
+  429: "Too many requests. Wait a moment and try again.",
+};
 
 async function authHeaders(): Promise<Record<string, string>> {
   if (isSelfHostedApp) return {};
@@ -42,14 +41,7 @@ async function authHeaders(): Promise<Record<string, string>> {
 
 async function readError(response: Response, fallback: string): Promise<ResearchApiError> {
   const body = (await response.json().catch(() => ({}))) as { error?: string; message?: string };
-  const message =
-    response.status === 401
-      ? body.message || "Sign in with Valyu to continue."
-      : response.status === 402
-        ? body.message || "Your Valyu account needs credits. Add credits at platform.valyu.ai."
-        : response.status === 429
-          ? body.message || "Too many requests. Wait a moment and try again."
-          : body.message || fallback;
+  const message = body.message || STATUS_MESSAGES[response.status] || fallback;
   return new ResearchApiError(response.status, body.error || "REQUEST_FAILED", message);
 }
 

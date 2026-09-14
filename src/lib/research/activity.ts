@@ -81,7 +81,7 @@ export function activityFromMessages(messages: unknown, taskStatus: string): Act
   if (!Array.isArray(messages)) return [];
 
   const results = new Map<string, Record<string, unknown>>();
-  const ordered: Array<{ role: string; part: Record<string, unknown> }> = [];
+  const ordered: Array<Record<string, unknown>> = [];
 
   for (const raw of messages.slice(-MAX_MESSAGES)) {
     const message = record(raw);
@@ -89,11 +89,11 @@ export function activityFromMessages(messages: unknown, taskStatus: string): Act
     if (!["assistant", "tool"].includes(role) || !Array.isArray(message.content)) continue;
     for (const rawPart of message.content.slice(0, MAX_PARTS)) {
       const part = record(rawPart);
-      const type = String(part.type);
-      if (type === "tool-result" && text(part.toolCallId, 200)) {
-        results.set(text(part.toolCallId, 200), part);
+      if (String(part.type) === "tool-result") {
+        const id = text(part.toolCallId, 200);
+        if (id) results.set(id, part);
       } else if (role === "assistant") {
-        ordered.push({ role, part });
+        ordered.push(part);
       }
     }
   }
@@ -103,7 +103,7 @@ export function activityFromMessages(messages: unknown, taskStatus: string): Act
   const running = taskStatus === "running" || taskStatus === "queued";
   let index = 0;
 
-  for (const { part } of ordered) {
+  for (const part of ordered) {
     const type = String(part.type);
     if (type === "text" || type === "reasoning") {
       const body = text(part.text, 1200);

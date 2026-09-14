@@ -62,7 +62,7 @@ export interface ForecastOutput {
   rationale: string;
 }
 
-const probability = (description: string) => ({
+const probabilityField = (description: string) => ({
   type: "number",
   description: `${description} A fraction between 0 and 1.`,
 });
@@ -96,14 +96,14 @@ export const forecastOutputSchema = {
       nullable: true,
       description: "The market's implied probability of YES at the time of research. A fraction between 0 and 1.",
     },
-    probability: probability("Your calibrated probability that the market resolves YES."),
+    probability: probabilityField("Your calibrated probability that the market resolves YES."),
     probability_range: {
       type: "object",
       nullable: true,
       required: ["low", "high"],
       properties: {
-        low: probability("Lower bound of the plausible range."),
-        high: probability("Upper bound of the plausible range."),
+        low: probabilityField("Lower bound of the plausible range."),
+        high: probabilityField("Upper bound of the plausible range."),
       },
       description: "A plausible range for the probability given the uncertainty.",
     },
@@ -142,7 +142,7 @@ export const forecastOutputSchema = {
       nullable: true,
       required: ["value", "reference_class"],
       properties: {
-        value: probability("Historical frequency of the outcome in the reference class."),
+        value: probabilityField("Historical frequency of the outcome in the reference class."),
         reference_class: { type: "string", description: "The class of comparable events." },
         note: nullableString("How well the reference class fits this market."),
       },
@@ -197,7 +197,7 @@ export const forecastOutputSchema = {
             nullable: true,
             description: "The market's implied probability for this outcome. A fraction between 0 and 1.",
           },
-          probability: probability("Your probability for this outcome."),
+          probability: probabilityField("Your probability for this outcome."),
         },
       },
     },
@@ -243,18 +243,9 @@ export function parseForecastOutput(value: unknown): ForecastOutput | undefined 
 
   const side: ForecastSide = ["YES", "NO", "NO_BET"].includes(recommendation.side) ? recommendation.side : "NO_BET";
   const confidence: ForecastConfidence = ["low", "medium", "high"].includes(raw.confidence) ? raw.confidence : "medium";
-  const range =
-    raw.probability_range && typeof raw.probability_range === "object"
-      ? { low: clamp(raw.probability_range.low, 0, 1), high: clamp(raw.probability_range.high, 0, 1) }
-      : null;
-  const baseRate =
-    raw.base_rate && typeof raw.base_rate === "object" && clamp(raw.base_rate.value, 0, 1) !== undefined
-      ? {
-          value: clamp(raw.base_rate.value, 0, 1) as number,
-          reference_class: String(raw.base_rate.reference_class || ""),
-          note: nullable(raw.base_rate.note),
-        }
-      : null;
+  const low = clamp(raw.probability_range?.low, 0, 1);
+  const high = clamp(raw.probability_range?.high, 0, 1);
+  const baseRateValue = clamp(raw.base_rate?.value, 0, 1);
 
   return {
     question: raw.question,
@@ -262,7 +253,7 @@ export function parseForecastOutput(value: unknown): ForecastOutput | undefined 
     resolution_date: nullable(raw.resolution_date),
     market_probability: clamp(raw.market_probability, 0, 1) ?? null,
     probability,
-    probability_range: range && range.low !== undefined && range.high !== undefined ? { low: range.low, high: range.high } : null,
+    probability_range: low !== undefined && high !== undefined ? { low, high } : null,
     confidence,
     recommendation: {
       side,
@@ -270,7 +261,14 @@ export function parseForecastOutput(value: unknown): ForecastOutput | undefined 
       reasoning: typeof recommendation.reasoning === "string" ? recommendation.reasoning : "",
     },
     summary: raw.summary,
-    base_rate: baseRate,
+    base_rate:
+      baseRateValue === undefined
+        ? null
+        : {
+            value: baseRateValue,
+            reference_class: String(raw.base_rate.reference_class || ""),
+            note: nullable(raw.base_rate.note),
+          },
     key_evidence: raw.key_evidence
       .filter((item: any) => item && typeof item.claim === "string")
       .map((item: any) => ({

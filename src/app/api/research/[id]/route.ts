@@ -1,6 +1,5 @@
-import { isSelfHostedMode } from "@/lib/local-db/local-auth";
 import { getResearchTask } from "@/lib/research/service";
-import { errorResponse, json, valyuTokenFromRequest } from "@/lib/server/http";
+import { errorResponse, json, requireValyuToken } from "@/lib/server/http";
 import { isTransientValyuError } from "@/lib/valyu/client";
 
 export const runtime = "nodejs";
@@ -10,10 +9,7 @@ export const maxDuration = 60;
 export async function GET(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await context.params;
-    const accessToken = valyuTokenFromRequest(request);
-    if (!isSelfHostedMode() && !accessToken) {
-      return json({ error: "AUTH_REQUIRED", message: "Sign in with Valyu to view this research." }, 401);
-    }
+    const accessToken = requireValyuToken(request, "Sign in with Valyu to view this research.");
     try {
       const task = await getResearchTask(id, { accessToken });
       return json({ task });
