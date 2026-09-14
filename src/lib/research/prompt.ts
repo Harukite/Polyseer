@@ -122,27 +122,21 @@ Method:
 
 Use prediction market data sources to check related markets and price history. Cite the sources behind every key claim with their URLs and dates. Dates matter: check that each source is current relative to today's date and the resolution window.`;
 
-export const FORECAST_DELIVERABLES: ForecastRequest["deliverables"] = [
-  {
-    type: "csv",
-    description:
-      "Every event, news item, data release, and factor affecting this market: what it is, which side it supports, how strongly, when it happened or will happen, and the source.",
-    columns: [
-      "factor",
-      "description",
-      "direction",
-      "weight_1_to_5",
-      "date",
-      "source_title",
-      "source_url",
-    ],
-  },
-  {
-    type: "pdf",
-    description:
-      "Full research report. Open with the predicted outcome, probability, and recommended side. Then cover resolution criteria, base rate, evidence for and against, catalysts, what would change the forecast, risks, and a cited source list.",
-  },
-];
+/** Deliverable titles are derived from the first words of the description, so lead with the question. */
+export function forecastDeliverables(question: string): ForecastRequest["deliverables"] {
+  const short = question.slice(0, 80);
+  return [
+    {
+      type: "csv",
+      description: `Factors for: ${short}. Every event, news item, data release, and factor affecting this market: what it is, which side it supports, how strongly, when it happened or will happen, and the source.`,
+      columns: ["factor", "description", "direction", "weight_1_to_5", "date", "source_title", "source_url"],
+    },
+    {
+      type: "pdf",
+      description: `Forecast report: ${short}. Open with the predicted outcome, probability, and recommended side. Then cover resolution criteria, base rate, evidence for and against, catalysts, what would change the forecast, risks, and a cited source list.`,
+    },
+  ];
+}
 
 export function buildForecastRequest(
   marketUrl: string,
@@ -152,7 +146,7 @@ export function buildForecastRequest(
   return {
     query: buildForecastQuery(marketUrl, platform, payload),
     research_strategy: FORECAST_RESEARCH_STRATEGY,
-    deliverables: FORECAST_DELIVERABLES,
+    deliverables: forecastDeliverables(payload.market_facts.question),
   };
 }
 
