@@ -49,6 +49,7 @@ export function EffortSelector({ value, onChange, disabled = false, className }:
       ref={menuRef}
       className={cn(
         "relative w-full rounded-2xl border border-white/20 bg-black/55 text-white shadow-xl backdrop-blur-md",
+        menuOpen && "z-30",
         disabled && "opacity-60",
         className
       )}
@@ -137,7 +138,7 @@ export function EffortSelector({ value, onChange, disabled = false, className }:
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.98 }}
             transition={{ duration: 0.15 }}
-            className="absolute left-3 right-3 top-[68px] z-20 overflow-hidden rounded-xl border border-white/15 bg-neutral-900/95 p-1 shadow-2xl backdrop-blur-xl"
+            className="absolute left-3 right-3 top-[68px] z-30 overflow-hidden rounded-xl border border-white/15 bg-neutral-950/95 p-1 shadow-2xl backdrop-blur-xl"
           >
             {researchEfforts.map((effort, index) => {
               const active = index === level;

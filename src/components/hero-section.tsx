@@ -269,7 +269,7 @@ export default function HeroSection({ onShowHowItWorks, marketUrl, setMarketUrl,
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 1.2, ease: "easeOut" }}
-              className="pt-4"
+              className="relative z-20 pt-4"
             >
               <EffortSelector value={effort} onChange={changeEffort} disabled={submitting} />
               {emailNote && (
